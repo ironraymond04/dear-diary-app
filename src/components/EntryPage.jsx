@@ -1,0 +1,299 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { useDiary } from '../context/DiaryContext';
+import { useTheme } from '../context/ThemeContext';
+
+export default function EntryPage() {
+  const navigate = useNavigate();
+  const { addEntry, updateEntry, diaryEntries, editingEntryId, unlockEntry } = useDiary();
+  const { isDarkMode } = useTheme();
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [emotion, setEmotion] = useState('');
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [lockPin, setLockPin] = useState('');
+  const [confirmLockPin, setConfirmLockPin] = useState('');
+  const [lockError, setLockError] = useState('');
+  const [isEntryLocked, setIsEntryLocked] = useState(false);
+  const [existingPin, setExistingPin] = useState(null);
+
+  // Load entry data if editing
+  useEffect(() => {
+    if (editingEntryId) {
+      const entry = diaryEntries.find(e => e.id === editingEntryId);
+      if (entry) {
+        setTitle(entry.title);
+        setContent(entry.content);
+        setEmotion(entry.emotion);
+        setIsEntryLocked(entry.isLocked || false);
+        setExistingPin(entry.pin || null);
+      }
+    } else {
+      // Reset for new entry
+      setExistingPin(null);
+      setIsEntryLocked(false);
+    }
+  }, [editingEntryId, diaryEntries]);
+
+  const handleLockToggle = () => {
+    if (isEntryLocked) {
+      // Unlocking: persist unlock immediately if editing an existing entry
+      if (editingEntryId) {
+        unlockEntry(editingEntryId);
+      }
+      setIsEntryLocked(false);
+      // clear temporary PIN inputs and errors; keep existingPin in sync via effect
+      setLockPin('');
+      setConfirmLockPin('');
+      setLockError('');
+    } else {
+      // Locking: will prompt for PIN on save
+      setIsEntryLocked(true);
+    }
+  };
+
+  const emotions = [
+    'Happy',
+    'Sad',
+    'Excited',
+    'Anxious',
+    'Calm',
+    'Angry',
+    'Grateful',
+    'Tired',
+    'Hopeful',
+    'Lonely',
+    'Content',
+    'Stressed',
+    'Peaceful',
+    'Frustrated',
+    'Loved'
+  ];
+
+  const handleSave = () => {
+    if (title.trim() && content.trim() && emotion.trim()) {
+      const entryData = {
+        title,
+        content,
+        emotion
+      };
+
+      // If editing and unlocking (removing PIN)
+      if (editingEntryId && !isEntryLocked && existingPin) {
+        entryData.isLocked = false;
+        entryData.pin = null;
+        updateEntry(editingEntryId, entryData);
+        setTitle('');
+        setContent('');
+        setEmotion('');
+        setExistingPin(null);
+        navigate('/main');
+      }
+      // If editing a locked entry, keep the lock without asking for PIN again
+      else if (editingEntryId && isEntryLocked && existingPin) {
+        entryData.isLocked = true;
+        entryData.pin = existingPin;
+        updateEntry(editingEntryId, entryData);
+        setTitle('');
+        setContent('');
+        setEmotion('');
+        navigate('/main');
+      } else if (isEntryLocked) {
+        // If locking a new entry or enabling lock on unlocked entry
+        setShowLockModal(true);
+      } else {
+        // Saving without lock
+        if (editingEntryId) {
+          updateEntry(editingEntryId, entryData);
+        } else {
+          addEntry(entryData);
+        }
+        setTitle('');
+        setContent('');
+        setEmotion('');
+        navigate('/main');
+      }
+    }
+  };
+
+  const handleLockEntry = () => {
+    if (!lockPin.trim() || !confirmLockPin.trim()) {
+      setLockError('Please enter a PIN');
+      return;
+    }
+    if (lockPin !== confirmLockPin) {
+      setLockError('PINs do not match');
+      return;
+    }
+    if (lockPin.length < 4) {
+      setLockError('PIN must be at least 4 digits');
+      return;
+    }
+
+    const entryData = {
+      title,
+      content,
+      emotion,
+      isLocked: true,
+      pin: lockPin
+    };
+
+    if (editingEntryId) {
+      updateEntry(editingEntryId, entryData);
+    } else {
+      addEntry(entryData);
+    }
+
+    setTitle('');
+    setContent('');
+    setEmotion('');
+    setShowLockModal(false);
+    setLockPin('');
+    setConfirmLockPin('');
+    setLockError('');
+    navigate('/main');
+  };
+
+  return (
+    <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* Back Button and Lock Button */}
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={() => navigate('/main')}
+          className={`text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
+        >
+          ←
+        </button>
+        <button
+          onClick={handleLockToggle}
+          className={`text-2xl hover:opacity-70 transition-opacity ${isEntryLocked ? 'opacity-100' : 'opacity-60'}`}
+          title={isEntryLocked ? 'Entry will be locked' : 'Entry is not locked'}
+        >
+          🔒
+        </button>
+      </div>
+
+      {/* Title */}
+      <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        {editingEntryId ? 'Edit Entry' : 'New Entry'}
+      </h1>
+
+      {/* Title Input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full bg-pink-300 text-gray-900 placeholder-gray-900 px-6 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-300"
+        />
+      </div>
+
+      {/* Content Textarea */}
+      <div className="mb-4">
+        <textarea
+          placeholder="Dear Diary,"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={8}
+          className="w-full bg-pink-300 text-gray-900 placeholder-gray-900 px-6 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"
+        />
+      </div>
+
+      {/* Emotion Dropdown */}
+      <div className="mb-6 flex justify-center">
+        <select
+          value={emotion}
+          onChange={(e) => setEmotion(e.target.value)}
+          className="bg-gray-200 text-gray-900 px-6 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 appearance-none cursor-pointer text-sm"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 1rem center'
+          }}
+        >
+          <option value="">Select emotion</option>
+          {emotions.map((emo) => (
+            <option key={emo} value={emo}>
+              {emo}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={!title.trim() || !content.trim() || !emotion.trim()}
+        className={`w-full font-medium py-4 rounded-full transition-colors ${
+          title.trim() && content.trim() && emotion.trim()
+            ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 cursor-pointer'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        }`}
+      >
+        Save Entry
+      </button>
+
+      {/* Lock Modal */}
+      {showLockModal && (
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center p-6 z-50">
+          <div className={`rounded-3xl p-6 w-full max-w-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Set Entry PIN</h2>
+            <p className={`mb-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Set a PIN to lock this entry</p>
+            <div className="space-y-4 mb-6">
+              <input
+                type="password"
+                placeholder="Enter PIN (4+ digits)"
+                value={lockPin}
+                onChange={(e) => setLockPin(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white placeholder-gray-400'
+                    : 'bg-gray-200 text-gray-900 placeholder-gray-700'
+                }`}
+                maxLength={6}
+              />
+              <input
+                type="password"
+                placeholder="Confirm PIN"
+                value={confirmLockPin}
+                onChange={(e) => setConfirmLockPin(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white placeholder-gray-400'
+                    : 'bg-gray-200 text-gray-900 placeholder-gray-700'
+                }`}
+                maxLength={6}
+              />
+            </div>
+            {lockError && <p className={`text-sm mb-4 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{lockError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowLockModal(false);
+                  setIsEntryLocked(false);
+                  setLockError('');
+                  setLockPin('');
+                  setConfirmLockPin('');
+                }}
+                className={`flex-1 font-medium py-3 rounded-full transition-colors ${
+                  isDarkMode
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                    : 'bg-gray-300 hover:bg-gray-400 text-gray-900'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLockEntry}
+                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 rounded-full transition-colors"
+              >
+                Lock Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

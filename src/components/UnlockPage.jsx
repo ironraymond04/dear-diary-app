@@ -1,0 +1,99 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { useDiary } from '../context/DiaryContext';
+import { useTheme } from '../context/ThemeContext';
+
+export default function UnlockPage() {
+  const navigate = useNavigate();
+  const { lockedEntryId, diaryEntries, setEditingEntryId, verifyEntryPin } = useDiary();
+  const { isDarkMode } = useTheme();
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+
+  const handleUnlock = () => {
+    if (!pin.trim()) {
+      setError('Please enter a PIN');
+      return;
+    }
+
+    if (verifyEntryPin(lockedEntryId, pin)) {
+      setEditingEntryId(lockedEntryId);
+      navigate('/entry');
+    } else {
+      setError('Incorrect PIN');
+      setPin('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleUnlock();
+    }
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/main')}
+        className={`absolute top-6 left-6 text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
+      >
+        ←
+      </button>
+
+      <div className="w-full max-w-sm text-center">
+        {/* Lock Icon */}
+        <div className="flex justify-center mb-8">
+          <svg
+            className={`w-20 h-20 ${isDarkMode ? 'text-white' : 'text-current'}`}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          This diary
+        </h1>
+        <h2 className={`text-3xl font-bold mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          is private.
+        </h2>
+
+        {/* PIN Input */}
+        <div className="mb-4">
+          <input
+            type="password"
+            placeholder="Enter PIN"
+            value={pin}
+            onChange={(e) => {
+              setPin(e.target.value);
+              setError('');
+            }}
+            onKeyPress={handleKeyPress}
+            className={`w-full text-center px-6 py-4 rounded-2xl focus:outline-none focus:ring-2 ${
+              isDarkMode
+                ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500'
+                : 'bg-gray-200 text-gray-900 placeholder-gray-700 focus:ring-gray-300'
+            } font-medium`}
+            maxLength={6}
+          />
+          {error && <p className={`text-sm mt-2 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
+        </div>
+
+        {/* Unlock Button */}
+        <button
+          onClick={handleUnlock}
+          className={`w-full font-medium py-4 rounded-full transition-colors ${
+            isDarkMode
+              ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              : 'bg-indigo-500 hover:bg-indigo-600 text-white'
+          }`}
+        >
+          Unlock Entry
+        </button>
+      </div>
+    </div>
+  );
+}
