@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useDiary } from '../context/DiaryContext';
 import { useTheme } from '../context/ThemeContext';
+import supabase from '../lib/supabase';
 
 export default function UnlockPage() {
   const navigate = useNavigate();

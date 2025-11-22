@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useDiary } from '../context/DiaryContext';
 import { useTheme } from '../context/ThemeContext';
+import supabase from '../lib/supabase';
 
 export default function EntryPage() {
   const navigate = useNavigate();
@@ -160,16 +161,16 @@ export default function EntryPage() {
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/main')}
-          className={`text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
+          className={`cursor-pointer text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
         >
           ←
         </button>
         <button
           onClick={handleLockToggle}
-          className={`text-2xl hover:opacity-70 transition-opacity ${isEntryLocked ? 'opacity-100' : 'opacity-60'}`}
+          className={`cursor-pointer text-2xl hover:opacity-70 transition-opacity ${isEntryLocked ? 'opacity-100' : 'opacity-60'}`}
           title={isEntryLocked ? 'Entry will be locked' : 'Entry is not locked'}
         >
-          🔒
+          {isEntryLocked ? "🔒" : "🔓"}
         </button>
       </div>
 

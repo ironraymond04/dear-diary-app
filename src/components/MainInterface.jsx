@@ -75,6 +75,11 @@ export default function MainInterfacePage() {
     navigate('/unlock');
   };
 
+  async function handlelogout() {
+    await supabase.auth.signOut();
+    navigate('/login');
+  }
+  
   return (
     <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
       
@@ -137,7 +142,7 @@ export default function MainInterfacePage() {
                   </li>
                   <li className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button
-                      onClick={() => { setEditingEntryId(null); setLockedEntryId(null); setMenuOpen(false); navigate('/login'); }}
+                      onClick={() => { setEditingEntryId(null); setLockedEntryId(null); setMenuOpen(false); handlelogout()}}
                       className={`cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-red-100 text-red-600 font-medium ${isDarkMode ? 'hover:bg-red-900' : ''}`}
                     >
                       Log Out
