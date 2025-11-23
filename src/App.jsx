@@ -20,9 +20,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/main" element={<MainInterface />} />
-            <Route path="/diary" element={<DiaryPage />} />
+            <Route path="/diary/:id" element={<DiaryPage />} />
             <Route path="/entry" element={<EntryPage />} />
-            <Route path="/unlock" element={<UnlockPage />} />
+            <Route path="/unlock/:id" element={<UnlockPage />} />
           </Routes>
         </Router>
       </DiaryProvider>

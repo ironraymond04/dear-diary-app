@@ -6,35 +6,56 @@ import supabase from '../lib/supabase';
 
 export default function UnlockPage() {
   const navigate = useNavigate();
-  const { lockedEntryId, diaryEntries, setEditingEntryId, verifyEntryPin } = useDiary();
+  const { lockedEntryId, setEditingEntryId } = useDiary();
   const { isDarkMode } = useTheme();
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!pin.trim()) {
       setError('Please enter a PIN');
       return;
     }
 
-    if (verifyEntryPin(lockedEntryId, pin)) {
-      setEditingEntryId(lockedEntryId);
-      navigate('/entry');
-    } else {
-      setError('Incorrect PIN');
-      setPin('');
+    setLoading(true);
+
+    try {
+      // Fetch the locked entry from Supabase
+      const { data: entry, error } = await supabase
+        .from('diaryentry')
+        .select('id, entry_pass')
+        .eq('id', lockedEntryId)
+        .single();
+
+      if (error || !entry) {
+        setError('Entry not found');
+        setLoading(false);
+        return;
+      }
+
+      // Check PIN
+      if (entry.entry_pass === pin) {
+        setEditingEntryId(lockedEntryId);
+        navigate(`/diary/${lockedEntryId}`);
+      } else {
+        setError('Incorrect PIN');
+        setPin('');
+      }
+    } catch (err) {
+      setError('Something went wrong');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleUnlock();
-    }
+    if (e.key === 'Enter') handleUnlock();
   };
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      {/* Back Button */}
       <button
         onClick={() => navigate('/main')}
         className={`absolute top-6 left-6 text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
@@ -43,26 +64,15 @@ export default function UnlockPage() {
       </button>
 
       <div className="w-full max-w-sm text-center">
-        {/* Lock Icon */}
         <div className="flex justify-center mb-8">
-          <svg
-            className={`w-20 h-20 ${isDarkMode ? 'text-white' : 'text-current'}`}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
+          <svg className={`w-20 h-20 ${isDarkMode ? 'text-white' : 'text-current'}`} viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
           </svg>
         </div>
 
-        {/* Title */}
-        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          This diary
-        </h1>
-        <h2 className={`text-3xl font-bold mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          is private.
-        </h2>
+        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>This diary</h1>
+        <h2 className={`text-3xl font-bold mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>is private.</h2>
 
-        {/* PIN Input */}
         <div className="mb-4">
           <input
             type="password"
@@ -79,20 +89,21 @@ export default function UnlockPage() {
                 : 'bg-gray-200 text-gray-900 placeholder-gray-700 focus:ring-gray-300'
             } font-medium`}
             maxLength={6}
+            disabled={loading}
           />
           {error && <p className={`text-sm mt-2 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
         </div>
 
-        {/* Unlock Button */}
         <button
           onClick={handleUnlock}
+          disabled={loading}
           className={`w-full font-medium py-4 rounded-full transition-colors ${
             isDarkMode
               ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
               : 'bg-indigo-500 hover:bg-indigo-600 text-white'
           }`}
         >
-          Unlock Entry
+          {loading ? 'Unlocking...' : 'Unlock Entry'}
         </button>
       </div>
     </div>

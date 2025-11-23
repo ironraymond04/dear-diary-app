@@ -16,9 +16,7 @@ export default function MainInterfacePage() {
 
   const menuRef = useRef(null);
 
-  // -----------------------------
-  // FETCH USER NAME
-  // -----------------------------
+
   useEffect(() => {
     fetchUserName();
   }, []);
@@ -60,20 +58,18 @@ export default function MainInterfacePage() {
     return cleanText;
   };
 
-  const handleEntryClick = (entryId) => {
-    setEditingEntryId(entryId);
-    navigate('/entry');
-  };
+const handleEntryClick = (entryId) => {
+  navigate(`/diary/${entryId}`);
+};
 
-  const handleAddNew = () => {
-    setEditingEntryId(null);
-    navigate('/entry');
-  };
+const handleAddNew = () => {
+  setEditingEntryId(null);
+  navigate('/entry');
+};
 
-  const handleLockedEntryClick = (entry) => {
-    setLockedEntryId(entry.id);
-    navigate('/unlock');
-  };
+const handleLockedEntryClick = (entry) => {
+  navigate(`/diary/${entry.id}`);
+};
 
   async function handlelogout() {
     await supabase.auth.signOut();
