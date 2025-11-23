@@ -1,16 +1,25 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { useDiary } from '../context/DiaryContext';
 import { useTheme } from '../context/ThemeContext';
 import supabase from '../lib/supabase';
 
 export default function UnlockPage() {
   const navigate = useNavigate();
-  const { lockedEntryId, setEditingEntryId } = useDiary();
+  const { id } = useParams();
+  const { lockedEntryId } = useDiary();
   const { isDarkMode } = useTheme();
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const entryId = lockedEntryId || id;
+
+  useEffect(() => {
+    if (!entryId) {
+      navigate('/main');
+    }
+  }, [entryId, navigate]);
 
   const handleUnlock = async () => {
     if (!pin.trim()) {
@@ -18,14 +27,18 @@ export default function UnlockPage() {
       return;
     }
 
+    if (!entryId) {
+      setError('No entry to unlock');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Fetch the locked entry from Supabase
       const { data: entry, error } = await supabase
         .from('diaryentry')
         .select('id, entry_pass')
-        .eq('id', lockedEntryId)
+        .eq('id', entryId)
         .single();
 
       if (error || !entry) {
@@ -34,10 +47,22 @@ export default function UnlockPage() {
         return;
       }
 
-      // Check PIN
-      if (entry.entry_pass === pin) {
-        setEditingEntryId(lockedEntryId);
-        navigate(`/diary/${lockedEntryId}`);
+      const enteredPin = String(pin).trim();
+      const storedPin = String(entry.entry_pass);
+
+      if (storedPin === enteredPin) {
+        // Store unlocked entry ID in sessionStorage
+        const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
+        if (!unlockedEntries.includes(entryId)) {
+          unlockedEntries.push(entryId);
+          sessionStorage.setItem('unlockedEntries', JSON.stringify(unlockedEntries));
+        }
+        
+
+         console.log('Unlocked entries:', unlockedEntries);
+
+        // Navigate to the diary entry view
+        navigate(`/diary/${entryId}`);
       } else {
         setError('Incorrect PIN');
         setPin('');
@@ -51,14 +76,17 @@ export default function UnlockPage() {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') handleUnlock();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleUnlock();
+    }
   };
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <button
         onClick={() => navigate('/main')}
-        className={`absolute top-6 left-6 text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
+        className={`cursor-pointer absolute top-6 left-6 text-2xl hover:opacity-70 transition-opacity ${isDarkMode ? 'text-white' : 'text-black'}`}
       >
         ←
       </button>
@@ -97,7 +125,7 @@ export default function UnlockPage() {
         <button
           onClick={handleUnlock}
           disabled={loading}
-          className={`w-full font-medium py-4 rounded-full transition-colors ${
+          className={`cursor-pointer w-full font-medium py-4 rounded-full transition-colors ${
             isDarkMode
               ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
               : 'bg-indigo-500 hover:bg-indigo-600 text-white'

@@ -16,7 +16,6 @@ export default function MainInterfacePage() {
 
   const menuRef = useRef(null);
 
-
   useEffect(() => {
     fetchUserName();
   }, []);
@@ -58,18 +57,21 @@ export default function MainInterfacePage() {
     return cleanText;
   };
 
-const handleEntryClick = (entryId) => {
-  navigate(`/diary/${entryId}`);
-};
+  const handleEntryClick = (entryId) => {
+    navigate(`/diary/${entryId}`);
+  };
 
-const handleAddNew = () => {
-  setEditingEntryId(null);
-  navigate('/entry');
-};
+  const handleAddNew = () => {
+    setEditingEntryId(null);
+    navigate('/entry');
+  };
 
-const handleLockedEntryClick = (entry) => {
-  navigate(`/diary/${entry.id}`);
-};
+  const handleLockedEntryClick = (entry) => {
+    // Set the locked entry ID before navigating
+    setLockedEntryId(entry.id);
+    // Navigate to unlock page
+    navigate(`/unlock/${entry.id}`);
+  };
 
   async function handlelogout() {
     await supabase.auth.signOut();
@@ -81,26 +83,25 @@ const handleLockedEntryClick = (entry) => {
       
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-2">
-  <h1
-    className={`text-3xl font-bold ${
-      isDarkMode ? "text-white" : "text-gray-900"
-    }`}
-  >
-    My Diary
-  </h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-2">
+          <h1
+            className={`text-3xl font-bold ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            My Diary
+          </h1>
 
-  {userName && (
-    <h2
-      className={`text-xl font-medium ${
-        isDarkMode ? "text-gray-300" : "text-gray-700"
-      }`}
-    >
-      Hello, {userName}
-    </h2>
-  )}
-</div>
-
+          {userName && (
+            <h2
+              className={`text-xl font-medium ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
+              Hello, {userName}
+            </h2>
+          )}
+        </div>
 
         <div className="flex items-center space-x-4">
           {/* Menu Button */}
@@ -139,7 +140,7 @@ const handleLockedEntryClick = (entry) => {
                   <li className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <button
                       onClick={() => { setEditingEntryId(null); setLockedEntryId(null); setMenuOpen(false); handlelogout()}}
-                      className={`cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-red-100 text-red-600 font-medium ${isDarkMode ? 'hover:bg-red-900' : ''}`}
+                      className={`cursor-pointer w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600 font-medium ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
                     >
                       Log Out
                     </button>
@@ -205,7 +206,7 @@ const handleLockedEntryClick = (entry) => {
                       e.stopPropagation();
                       setDeleteConfirmId(entry.id);
                     }}
-                    className={`p-2 rounded-md hover:bg-red-100 focus:outline-none ${isDarkMode ? 'hover:bg-red-700' : ''}`}
+                    className={`cursor-pointer p-2 rounded-md hover:bg-red-100 focus:outline-none ${isDarkMode ? 'hover:bg-red-700' : ''}`}
                     title="Delete entry"
                     aria-label="Delete entry"
                   >

@@ -7,7 +7,7 @@ import supabase from "../lib/supabase";
 export default function DiaryPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { editingEntryId, setEditingEntryId } = useDiary(); // check unlocked entry
+  const { editingEntryId, setEditingEntryId } = useDiary();
   const { isDarkMode } = useTheme();
 
   const [entry, setEntry] = useState(null);
@@ -25,25 +25,30 @@ export default function DiaryPage() {
         .single();
 
       if (error || !data) {
-        navigate("/main"); // Entry not found → go back
+        navigate("/main");
         return;
       }
 
       setEntry(data);
 
-      // If entry is locked and NOT unlocked, redirect to unlock page
-      if (data.entry_pass && editingEntryId !== id) {
-        navigate(`/unlock/${id}`);
-      } else {
-        // Mark as currently editing/unlocked
-        setEditingEntryId(id);
+      // If entry is locked, check if it's been unlocked in this session
+      if (data.entry_pass) {
+        const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
+        
+        if (!unlockedEntries.includes(id)) {
+          // Not unlocked yet - redirect to unlock page
+          navigate(`/unlock/${id}`);
+          return;
+        }
       }
 
+      // Entry is accessible - mark as currently editing
+      setEditingEntryId(id);
       setLoading(false);
     }
 
     fetchEntry();
-  }, [id, navigate, editingEntryId, setEditingEntryId]);
+  }, [id, navigate, setEditingEntryId]);
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (!entry) return null;
@@ -57,7 +62,7 @@ export default function DiaryPage() {
       {/* 🔙 Back Button */}
       <button
         onClick={() => navigate("/main")}
-        className={`text-2xl mb-4 hover:opacity-70 transition-opacity ${
+        className={`cursor-pointer text-2xl mb-4 hover:opacity-70 transition-opacity ${
           isDarkMode ? "text-white" : "text-black"
         }`}
       >
@@ -89,7 +94,7 @@ export default function DiaryPage() {
             setEditingEntryId(entry.id);
             navigate("/entry");
           }}
-          className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold"
+          className="cursor-pointer mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold"
         >
           Edit Diary
         </button>
