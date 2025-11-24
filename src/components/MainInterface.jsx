@@ -67,9 +67,7 @@ export default function MainInterfacePage() {
   };
 
   const handleLockedEntryClick = (entry) => {
-    // Set the locked entry ID before navigating
     setLockedEntryId(entry.id);
-    // Navigate to unlock page
     navigate(`/unlock/${entry.id}`);
   };
 
@@ -195,7 +193,22 @@ export default function MainInterfacePage() {
                     <>
                       <h2 className="font-semibold text-gray-900 text-wrap mb-2">{entry.date}</h2>
                       <h3 className="font-bold text-lg text-gray-900 mb-2">{entry.title}</h3>
-                      <p className="text-sm text-gray-700 mb-3">{entry.emotion}</p>
+                      
+                      {/* Display Emotion with Emoji */}
+                      <div className="flex items-center gap-2 mb-2">
+                        {entry.emoji && <span className="text-lg">{entry.emoji}</span>}
+                        <p className="text-sm font-medium text-gray-700">{entry.emotion}</p>
+                      </div>
+
+                      {/* Display Tag if exists */}
+                      {entry.tag && (
+                        <div className="mb-2">
+                          <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full font-medium">
+                            #{entry.tag}
+                          </span>
+                        </div>
+                      )}
+
                       <p className="text-gray-900 text-wrap overflow-hidden">{truncateContent(entry.content)}</p>
                     </>
                   )}
@@ -244,7 +257,7 @@ export default function MainInterfacePage() {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setDeleteConfirmId(null)}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
+                  className={`cursor-pointer px-4 py-2 rounded-md font-medium transition-colors ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
                 >
                   Cancel
                 </button>
@@ -253,7 +266,7 @@ export default function MainInterfacePage() {
                     deleteEntry(deleteConfirmId);
                     setDeleteConfirmId(null);
                   }}
-                  className="px-4 py-2 rounded-md font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                  className="cursor-pointer px-4 py-2 rounded-md font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
                 >
                   Delete
                 </button>
@@ -269,8 +282,8 @@ export default function MainInterfacePage() {
           <div className={`rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
             <div className="p-6">
               <h2 className="text-xl font-bold mb-3">About Dear Diary</h2>
-              <p className="text-sm mb-4">Dear Diary is a simple and secure diary app to store your thoughts and memories. Your entries are stored locally in application state for this demo.</p>
-              <p className="text-sm mb-6">Version 1.0</p>
+              <p className="text-sm mb-4">Dear Diary is a simple and secure diary app to store your thoughts and memories. Your entries are stored securely in Supabase with support for moods, tags, and privacy locks.</p>
+              <p className="text-sm mb-6">Version 2.0</p>
               <div className="flex justify-end">
                 <button
                   onClick={() => setAboutOpen(false)}

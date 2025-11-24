@@ -17,22 +17,36 @@ export default function DiaryPage() {
     async function fetchEntry() {
       setLoading(true);
 
-      // Fetch entry from Supabase
-      const { data, error } = await supabase
+      // Fetch entry from Supabase with mood and tag
+      const { data: entryData, error } = await supabase
         .from("diaryentry")
-        .select("id, title, content, mood_id, entry_pass, moods(name)")
+        .select("id, title, content, mood_id, entry_pass, moods(name, emoji)")
         .eq("id", id)
         .single();
 
-      if (error || !data) {
+      if (error || !entryData) {
         navigate("/main");
         return;
       }
 
-      setEntry(data);
+      // Fetch tag for this entry via junction table
+      const { data: tagData } = await supabase
+        .from("entrytag")
+        .select("tag_id, tag(name)")
+        .eq("entry_id", id)
+        .limit(1)
+        .single();
+
+      // Combine entry and tag data
+      const fullEntry = {
+        ...entryData,
+        tag: tagData?.tag?.name || null
+      };
+
+      setEntry(fullEntry);
 
       // If entry is locked, check if it's been unlocked in this session
-      if (data.entry_pass) {
+      if (entryData.entry_pass) {
         const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
         
         if (!unlockedEntries.includes(id)) {
@@ -59,7 +73,7 @@ export default function DiaryPage() {
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       }`}
     >
-      {/* 🔙 Back Button */}
+      {/* Back Button */}
       <button
         onClick={() => navigate("/main")}
         className={`cursor-pointer text-2xl mb-4 hover:opacity-70 transition-opacity ${
@@ -78,15 +92,34 @@ export default function DiaryPage() {
         Diary Entry
       </h1>
 
-      {/* 📖 Diary Content */}
+      {/* Diary Content */}
       <div
         className={`mt-4 p-6 rounded-lg shadow-lg ${
           isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
         }`}
       >
-        <h2 className="text-2xl font-semibold">{entry.title}</h2>
+        <h2 className="text-2xl font-semibold mb-4">{entry.title}</h2>
+        
+        {/* Display Mood with Emoji */}
+        {entry.moods && (
+          <div className="flex items-center gap-2 mb-4">
+            {entry.moods.emoji && <span className="text-2xl">{entry.moods.emoji}</span>}
+            <p className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {entry.moods.name}
+            </p>
+          </div>
+        )}
+
+        {/* Display Tag if exists */}
+        {entry.tag && (
+          <div className="mb-4">
+            <span className="inline-block bg-indigo-100 text-indigo-800 text-sm px-3 py-1 rounded-full font-medium">
+              #{entry.tag}
+            </span>
+          </div>
+        )}
+
         <p className="mt-4 whitespace-pre-wrap leading-relaxed">{entry.content}</p>
-        <p className="mt-4 whitespace-pre-wrap leading-relaxed">{entry.moods.name}</p>
 
         {/* Edit Button */}
         <button
