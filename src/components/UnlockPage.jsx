@@ -33,43 +33,55 @@ export default function UnlockPage() {
     }
 
     setLoading(true);
+    setError('');
 
     try {
-      const { data: entry, error } = await supabase
+      const { data: entry, error: fetchError } = await supabase
         .from('diaryentry')
         .select('id, entry_pass')
         .eq('id', entryId)
         .single();
 
-      if (error || !entry) {
+      if (fetchError || !entry) {
         setError('Entry not found');
         setLoading(false);
         return;
       }
 
       const enteredPin = String(pin).trim();
-      const storedPin = String(entry.entry_pass);
+      const storedPin = String(entry.entry_pass).trim();
 
       if (storedPin === enteredPin) {
         // Store unlocked entry ID in sessionStorage
-        const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
-        if (!unlockedEntries.includes(entryId)) {
-          unlockedEntries.push(entryId);
-          sessionStorage.setItem('unlockedEntries', JSON.stringify(unlockedEntries));
+        try {
+          const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
+          if (!unlockedEntries.includes(entryId)) {
+            unlockedEntries.push(entryId);
+            sessionStorage.setItem('unlockedEntries', JSON.stringify(unlockedEntries));
+          }
+          
+          console.log('Unlocked entries:', unlockedEntries);
+          
+          // Navigate with state to indicate successful unlock
+          navigate(`/diary/${entryId}`, { 
+            state: { unlocked: true },
+            replace: true 
+          });
+        } catch (storageError) {
+          console.error('SessionStorage error:', storageError);
+          // Still navigate even if sessionStorage fails
+          navigate(`/diary/${entryId}`, { 
+            state: { unlocked: true },
+            replace: true 
+          });
         }
-        
-
-         console.log('Unlocked entries:', unlockedEntries);
-
-        // Navigate to the diary entry view
-        navigate(`/diary/${entryId}`);
       } else {
         setError('Incorrect PIN');
         setPin('');
       }
     } catch (err) {
       setError('Something went wrong');
-      console.error(err);
+      console.error('Unlock error:', err);
     } finally {
       setLoading(false);
     }
@@ -114,10 +126,11 @@ export default function UnlockPage() {
             className={`w-full text-center px-6 py-4 rounded-2xl focus:outline-none focus:ring-2 ${
               isDarkMode
                 ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500'
-                : 'bg-gray-200 text-gray-900 placeholder-gray-700 focus:ring-gray-300'
+                : 'bg-gray-200 text-gray-900 placeholder-gray-500 focus:ring-gray-300'
             } font-medium`}
             maxLength={6}
             disabled={loading}
+            autoFocus
           />
           {error && <p className={`text-sm mt-2 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>{error}</p>}
         </div>
@@ -125,7 +138,7 @@ export default function UnlockPage() {
         <button
           onClick={handleUnlock}
           disabled={loading}
-          className={`cursor-pointer w-full font-medium py-4 rounded-full transition-colors ${
+          className={`cursor-pointer w-full font-medium py-4 rounded-full transition-colors disabled:opacity-50 ${
             isDarkMode
               ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
               : 'bg-indigo-500 hover:bg-indigo-600 text-white'

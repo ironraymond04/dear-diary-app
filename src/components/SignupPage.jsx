@@ -42,7 +42,7 @@ export default function SignupPage() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Name"
+              placeholder="Username"
               className="w-full bg-gray-200 text-gray-900 placeholder-gray-700 px-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
               onChange={(e) => setName(e.target.value)}
             />

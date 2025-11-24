@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useLocation } from "react-router";
 import { useDiary } from "../context/DiaryContext";
 import { useTheme } from "../context/ThemeContext";
 import supabase from "../lib/supabase";
 
 export default function DiaryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const { editingEntryId, setEditingEntryId } = useDiary();
   const { isDarkMode } = useTheme();
@@ -29,6 +30,27 @@ export default function DiaryPage() {
         return;
       }
 
+      // Check if entry is locked BEFORE fetching additional data
+      if (entryData.entry_pass) {
+        // Check if unlocked via navigation state
+        const unlockedViaState = location.state?.unlocked;
+        
+        // Check if unlocked in sessionStorage
+        let unlockedInSession = false;
+        try {
+          const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
+          unlockedInSession = unlockedEntries.includes(id);
+        } catch (e) {
+          console.error('SessionStorage error:', e);
+        }
+
+        if (!unlockedViaState && !unlockedInSession) {
+          // Not unlocked yet - redirect to unlock page
+          navigate(`/unlock/${id}`, { replace: true });
+          return;
+        }
+      }
+
       // Fetch tag for this entry via junction table
       const { data: tagData } = await supabase
         .from("entrytag")
@@ -45,26 +67,22 @@ export default function DiaryPage() {
 
       setEntry(fullEntry);
 
-      // If entry is locked, check if it's been unlocked in this session
-      if (entryData.entry_pass) {
-        const unlockedEntries = JSON.parse(sessionStorage.getItem('unlockedEntries') || '[]');
-        
-        if (!unlockedEntries.includes(id)) {
-          // Not unlocked yet - redirect to unlock page
-          navigate(`/unlock/${id}`);
-          return;
-        }
-      }
-
       // Entry is accessible - mark as currently editing
       setEditingEntryId(id);
       setLoading(false);
     }
 
     fetchEntry();
-  }, [id, navigate, setEditingEntryId]);
+  }, [id, navigate, setEditingEntryId, location.state]);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+        <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Loading...</p>
+      </div>
+    );
+  }
+
   if (!entry) return null;
 
   return (
@@ -113,7 +131,11 @@ export default function DiaryPage() {
         {/* Display Tag if exists */}
         {entry.tag && (
           <div className="mb-4">
-            <span className="inline-block bg-indigo-100 text-indigo-800 text-sm px-3 py-1 rounded-full font-medium">
+            <span className={`inline-block text-sm px-3 py-1 rounded-full font-medium ${
+              isDarkMode 
+                ? 'bg-indigo-900 text-indigo-200' 
+                : 'bg-indigo-100 text-indigo-800'
+            }`}>
               #{entry.tag}
             </span>
           </div>
@@ -127,7 +149,7 @@ export default function DiaryPage() {
             setEditingEntryId(entry.id);
             navigate("/entry");
           }}
-          className="cursor-pointer mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold"
+          className="cursor-pointer mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
         >
           Edit Diary
         </button>
