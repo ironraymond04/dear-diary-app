@@ -4,7 +4,7 @@ A personal journaling app to capture your thoughts and memories.
 
 ## 🌐 Live Demo
 
-**Live Link:** [https://your-app-name.netlify.app](https://your-app-name.netlify.app)
+**Live Link:** [https://dear-diary-app.netlify.app/](https://dear-diary-app.netlify.app/)
 
 *(Update this link after deployment)*
 
