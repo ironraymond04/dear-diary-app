@@ -178,7 +178,10 @@ export default function EntryPage() {
       </div>
 
       {/* Page Title */}
-      <h1 className="text-white text-3xl font-bold mb-6 text-center">
+      <h1 className={`text-3xl font-bold mb-6 text-center ${
+        isDarkMode ? "text-gray-300" : "text-gray-700"
+        }`}
+        >
         {editingEntryId ? "Edit Entry" : "New Entry"}
       </h1>
 
