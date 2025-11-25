@@ -10,7 +10,8 @@
 [[headers]]
   for = "/serviceworker.js"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Content-Type = "application/javascript; charset=utf-8"
+    Service-Worker-Allowed = "/"
     
 [[headers]]
   for = "/manifest.json"
