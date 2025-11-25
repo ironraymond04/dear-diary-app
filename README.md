@@ -6,8 +6,6 @@ A personal journaling app to capture your thoughts and memories.
 
 **Live Link:** [https://dear-diary-app.netlify.app/](https://dear-diary-app.netlify.app/)
 
-*(Update this link after deployment)*
-
 ## ✨ Features
 
 - 📝 Create and manage daily journal entries
@@ -27,7 +25,7 @@ A personal journaling app to capture your thoughts and memories.
 ## 🛠️ Tech Stack
 
 - **Frontend:** React + Vite
-- **Styling:** CSS3
+- **Styling:** TailwindCSS
 - **PWA:** Service Worker, Web App Manifest
 - **Deployment:** Netlify
 
@@ -146,7 +144,9 @@ Contributions, issues, and feature requests are welcome!
 
 ## 👨‍💻 Author
 
-Your Name
+Raymond Christian A. Galanza
+John Michael N. Pugales
+BS Information Technology III
 
 ---
 
