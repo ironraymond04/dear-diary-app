@@ -142,10 +142,12 @@ MIT License - feel free to use this project for personal or commercial purposes.
 
 Contributions, issues, and feature requests are welcome!
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
 Raymond Christian A. Galanza
+
 John Michael N. Pugales
+
 BS Information Technology III
 
 ---
