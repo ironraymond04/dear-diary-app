@@ -6,7 +6,8 @@ const urlsToCache = [
   '/src/App.jsx',
   '/src/index.css',
   '/favicon.ico',
-  '/manifest.json'
+  '/manifest.json',
+  '/serviceworker.js'
 ];
 
 // Install event - cache resources
