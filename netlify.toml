@@ -8,7 +8,7 @@
   status = 200
 
 [[headers]]
-  for = "/service-worker.js"
+  for = "/serviceworker.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     
