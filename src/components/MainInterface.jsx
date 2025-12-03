@@ -219,7 +219,7 @@ export default function MainInterfacePage() {
       )}
 
       {/* Diary Entries */}
-      <div className="space-y-4 mb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-20">
         {filteredEntries.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <p className={`text-center text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
