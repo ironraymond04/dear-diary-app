@@ -14,6 +14,7 @@ export default function MainInterfacePage() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
 
   const menuRef = useRef(null);
 
@@ -58,13 +59,39 @@ export default function MainInterfacePage() {
     }).filter(Boolean)
   )].sort((a, b) => b - a);
 
-  // Filter entries by selected year
-  const filteredEntries = selectedYear === "all" 
-    ? diaryEntries 
-    : diaryEntries.filter(entry => {
-        const entryYear = new Date(entry.date).getFullYear();
-        return entryYear === parseInt(selectedYear);
-      });
+  // Get unique months for the selected year
+  const availableMonths = selectedYear === "all" 
+    ? []
+    : [...new Set(
+        diaryEntries
+          .filter(entry => {
+            const entryYear = new Date(entry.date).getFullYear();
+            return entryYear === parseInt(selectedYear);
+          })
+          .map(entry => new Date(entry.date).getMonth())
+      )].sort((a, b) => a - b);
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Filter entries by selected year and month
+  const filteredEntries = diaryEntries.filter(entry => {
+    const entryDate = new Date(entry.date);
+    const entryYear = entryDate.getFullYear();
+    const entryMonth = entryDate.getMonth();
+    
+    if (selectedYear !== "all" && entryYear !== parseInt(selectedYear)) {
+      return false;
+    }
+    
+    if (selectedMonth !== "all" && entryMonth !== parseInt(selectedMonth)) {
+      return false;
+    }
+    
+    return true;
+  });
 
   const truncateContent = (text, maxLength = 100) => {
     const cleanText = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
@@ -184,31 +211,56 @@ export default function MainInterfacePage() {
         </div>
       </div>
 
-      {/* Year Filter */}
+      {/* Year and Month Filters */}
       {availableYears.length > 0 && (
         <div className="mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <label 
               htmlFor="year-filter" 
               className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
             >
-              Filter by year:
+              Filter by:
             </label>
+            
+            {/* Year Filter */}
             <select
               id="year-filter"
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                setSelectedMonth("all");
+              }}
               className={`px-4 py-2 rounded-lg border transition-colors cursor-pointer ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' 
                   : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <option value="all">All</option>
+              <option value="all">All Years</option>
               {availableYears.map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
+
+            {/* Month Filter */}
+            {selectedYear !== "all" && availableMonths.length > 0 && (
+              <select
+                id="month-filter"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className={`px-4 py-2 rounded-lg border transition-colors cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' 
+                    : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <option value="all">All Months</option>
+                {availableMonths.map(month => (
+                  <option key={month} value={month}>{monthNames[month]}</option>
+                ))}
+              </select>
+            )}
+
             {selectedYear !== "all" && (
               <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 ({filteredEntries.length} {filteredEntries.length === 1 ? 'entry' : 'entries'})
@@ -225,6 +277,8 @@ export default function MainInterfacePage() {
             <p className={`text-center text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               {selectedYear === "all" 
                 ? "No Entry yet, create an entry to display here."
+                : selectedMonth !== "all"
+                ? `No entries found for ${monthNames[parseInt(selectedMonth)]} ${selectedYear}.`
                 : `No entries found for ${selectedYear}.`
               }
             </p>
