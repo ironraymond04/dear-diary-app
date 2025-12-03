@@ -13,6 +13,7 @@ export default function MainInterfacePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [selectedYear, setSelectedYear] = useState("all");
 
   const menuRef = useRef(null);
 
@@ -48,6 +49,22 @@ export default function MainInterfacePage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Get unique years from diary entries
+  const availableYears = [...new Set(
+    diaryEntries.map(entry => {
+      const year = new Date(entry.date).getFullYear();
+      return isNaN(year) ? null : year;
+    }).filter(Boolean)
+  )].sort((a, b) => b - a);
+
+  // Filter entries by selected year
+  const filteredEntries = selectedYear === "all" 
+    ? diaryEntries 
+    : diaryEntries.filter(entry => {
+        const entryYear = new Date(entry.date).getFullYear();
+        return entryYear === parseInt(selectedYear);
+      });
 
   const truncateContent = (text, maxLength = 100) => {
     const cleanText = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
@@ -167,16 +184,53 @@ export default function MainInterfacePage() {
         </div>
       </div>
 
+      {/* Year Filter */}
+      {availableYears.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-3">
+            <label 
+              htmlFor="year-filter" 
+              className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
+              Filter by year:
+            </label>
+            <select
+              id="year-filter"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className={`px-4 py-2 rounded-lg border transition-colors cursor-pointer ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' 
+                  : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <option value="all">All</option>
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            {selectedYear !== "all" && (
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                ({filteredEntries.length} {filteredEntries.length === 1 ? 'entry' : 'entries'})
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Diary Entries */}
       <div className="space-y-4 mb-20">
-        {diaryEntries.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <div className="flex items-center justify-center h-64">
-            <p className="text-center text-gray-600 text-lg">
-              No Entry yet, create an entry to display here.
+            <p className={`text-center text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {selectedYear === "all" 
+                ? "No Entry yet, create an entry to display here."
+                : `No entries found for ${selectedYear}.`
+              }
             </p>
           </div>
         ) : (
-          diaryEntries.map((entry) => (
+          filteredEntries.map((entry) => (
             <div
               key={entry.id}
               onClick={() => entry.isLocked ? handleLockedEntryClick(entry) : handleEntryClick(entry.id)}
@@ -187,7 +241,9 @@ export default function MainInterfacePage() {
                   {entry.isLocked ? (
                     <div className="flex flex-col items-center justify-center py-16 ml-8">
                       <span className="text-5xl">🔒</span>
-                      <p className="text-gray-900 font-medium text-sm mt-4">Entry is locked</p>
+                      <p className="text-gray-900 font-medium text-sm mt-4 text-center">Entry is locked<br />
+                      {entry.date}
+                      </p>
                     </div>
                   ) : (
                     <>
